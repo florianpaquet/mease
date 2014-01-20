@@ -1,0 +1,10 @@
+/*
+*.pyc
+!.gitignore
+!LICENSE
+!README.rst
+!mease/
+!setup.py
+!docs/
+docs/_build
+docs/make.bat
