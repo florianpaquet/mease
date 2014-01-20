@@ -10,8 +10,6 @@ def read(fname):
 dependencies = []
 requires = [
     'tornado>=3.2',
-    'redis>=2.9.0',
-    'toredis-mease==0.1.2',
 ]
 
 if sys.version_info[0] == 2:
@@ -20,7 +18,7 @@ if sys.version_info[0] == 2:
 setup(
     name='mease',
     version='0.1.0',
-    description="TODO",
+    description="Mease: Tornado websocket server with an easy callback registry",
     url="https://github.com/florianpaquet/mease",
     author="Florian PAQUET",
     author_email="contact@florianpaquet.com",
