@@ -92,19 +92,18 @@ class WebSocketServer(object):
     """
     Tornado websocket server
     """
-    def __init__(self, mease, port=9090, debug=False):
+    def __init__(self, mease, port, autoreload):
         """
         Inits websocket server
         """
         self.mease = mease
-        self.debug = debug
         self.port = port
 
         # Tornado app
         self.ioloop = tornado.ioloop.IOLoop.instance()
         self.application = tornado.web.Application([
             (r'/', WebSocketHandler),
-        ], debug=self.debug)
+        ], debug=autoreload)
 
         # Initialize an empty application storage
         self.application.storage = {}

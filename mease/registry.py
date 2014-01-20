@@ -65,9 +65,9 @@ class Mease(object):
 
         self.publisher.publish(*args, **kwargs)
 
-    def run_websocket_server(self, port=9090, debug=True):
+    def run_websocket_server(self, port=9090, autoreload=False):
         """
         Runs Tornado websocket server (blocking)
         """
-        ws_server = WebSocketServer(self, port, debug)
+        ws_server = WebSocketServer(self, port, autoreload)
         ws_server.run()
