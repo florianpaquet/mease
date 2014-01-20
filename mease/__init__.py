@@ -1,2 +1,2 @@
-from .permissions import require_permission
+from .permissions import passes_test
 from .registry import Mease

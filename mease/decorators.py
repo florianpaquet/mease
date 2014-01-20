@@ -4,8 +4,10 @@ __all__ = ('base', 'opener', 'closer', 'receiver', 'sender')
 
 
 def method_decorator(method):
-    def wrap(instance, *args, **kwargs):
-        def inner_wrap(func):
-            method(instance, func, *args, **kwargs)
+    def wrap(instance, function=None, *args, **kwargs):
+        def inner_wrap(callback):
+            method(instance, callback, *args, **kwargs)
+        if function:
+            return inner_wrap(function)
         return inner_wrap
     return wrap
