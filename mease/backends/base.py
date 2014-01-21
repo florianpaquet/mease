@@ -33,10 +33,8 @@ class BaseSubscriber(object):
         logger.debug("Backend message on [{routing}] route : {args} {kwargs}".format(
             routing=routing, args=args, kwargs=kwargs))
 
-        for func, routings in self.application._mease.senders:
-            if routing is None or routings is None or routing in routings:
-                self.application.executor.submit(
-                    func, routing, self.application.clients, *args, **kwargs)
+        self.application._mease.call_senders(
+            routing, self.application.clients, *args, **kwargs)
 
 
 class BaseBackend(SettingsMixin):

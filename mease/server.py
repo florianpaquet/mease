@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 import tornado.gen
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-from concurrent.futures import ThreadPoolExecutor
 
 __all__ = ('WebSocketServer',)
 logger = logging.getLogger('mease.websocket_server')
@@ -23,8 +21,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.storage = {}
 
         # Call openers callbacks
-        for func in self.application._mease.openers:
-            self.application.executor.submit(func, self, self.application.clients)
+        self.application._mease.call_openers(self, self.application.clients)
 
         # Append client to clients list
         if self not in self.application.clients:
@@ -37,8 +34,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         logger.debug("Connection closed ({ip})".format(ip=self.request.remote_ip))
 
         # Call closer callbacks
-        for func in self.application._mease.closers:
-            self.application.executor.submit(func, self, self.application.clients)
+        self.application._mease.call_closers(self, self.application.clients)
 
         # Remove client from clients list
         if self in self.application.clients:
@@ -51,26 +47,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         logger.debug("Incoming message ({ip}) : {message}".format(
             ip=self.request.remote_ip, message=message))
 
-        # Parse JSON
-        try:
-            json_message = json.loads(message)
-        except ValueError:
-            json_message = None
-
         # Call receiver callbacks
-        for func, to_json in self.application._mease.receivers:
-
-            # Check if json version is available
-            if to_json:
-                if json_message is None:
-                    continue
-                msg = json_message
-            else:
-                msg = message
-
-            # Call callback
-            self.application.executor.submit(
-                func, self, msg, self.application.clients)
+        self.application._mease.call_receivers(self, message, self.application.clients)
 
     def write_message(self, message, *args, **kwargs):
         """
@@ -113,10 +91,6 @@ class WebSocketServer(object):
 
         # Expose mease instance to Tornado application
         self.application._mease = self.mease
-
-        # Create an executor for callbacks
-        # TODO : Tornado async methods ?
-        self.application.executor = ThreadPoolExecutor(max_workers=20)  # SETTING REQUIRED
 
         # Connect to subscriber
         logger.debug("Connecting to backend ({backend_name})...".format(
