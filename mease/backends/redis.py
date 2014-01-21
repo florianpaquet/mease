@@ -31,7 +31,7 @@ class RedisBackendMixin(object):
         self.channel = channel
 
 
-class RedisPublisher(BasePublisher, RedisBackendMixin):
+class RedisPublisher(RedisBackendMixin, BasePublisher):
     """
     Publisher using Redis PUB
     """
@@ -49,7 +49,7 @@ class RedisPublisher(BasePublisher, RedisBackendMixin):
         self.client.publish(self.channel, p)
 
 
-class RedisSubscriber(BaseSubscriber, RedisBackendMixin):
+class RedisSubscriber(RedisBackendMixin, BaseSubscriber):
     """
     Subscriber using Redis SUB
     """
