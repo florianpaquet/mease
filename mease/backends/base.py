@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from ..mixins import SettingsMixin
 
 logger = logging.getLogger('mease.websocket_server')
 
@@ -37,7 +36,7 @@ class BaseSubscriber(object):
             routing, self.application.clients, *args, **kwargs)
 
 
-class BaseBackend(SettingsMixin):
+class BaseBackend(object):
     """
     Base backend with a publisher and a subscriber class
     """

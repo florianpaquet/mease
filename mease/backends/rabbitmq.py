@@ -143,9 +143,9 @@ class RabbitMQBackend(BaseBackend):
     def __init__(self, *args, **kwargs):
         super(RabbitMQBackend, self).__init__(*args, **kwargs)
 
-        self.broker_url = self.get_setting(
-            self.settings, 'BACKEND', 'BROKER_URL', 'amqp://guest:guest@localhost:5672//')
-        self.queue = self.get_setting(self.settings, 'BACKEND', 'QUEUE', 'mease')
+        self.broker_url = self.settings.get(
+            'BROKER_URL', 'amqp://guest:guest@localhost:5672//')
+        self.queue = self.settings.get('QUEUE', 'mease')
 
     def get_kwargs(self):
         """

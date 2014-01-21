@@ -94,9 +94,9 @@ class RedisBackend(BaseBackend):
     def __init__(self, *args, **kwargs):
         super(RedisBackend, self).__init__(*args, **kwargs)
 
-        self.host = self.get_setting(self.settings, 'BACKEND', 'HOST', 'localhost')
-        self.port = self.get_setting(self.settings, 'BACKEND', 'PORT', 6379)
-        self.channel = self.get_setting(self.settings, 'BACKEND', 'CHANNEL', 'mease')
+        self.host = self.settings.get('HOST', 'localhost')
+        self.port = self.settings.get('PORT', 6379)
+        self.channel = self.settings.get('CHANNEL', 'mease')
 
     def get_kwargs(self):
         """
