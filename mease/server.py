@@ -10,7 +10,9 @@ logger = logging.getLogger('mease.websocket_server')
 
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
-
+    """
+    Tornado websocket handler
+    """
     def open(self):
         """
         Called when a client opens a websocket connection
