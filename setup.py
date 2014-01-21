@@ -17,7 +17,7 @@ if sys.version_info[0] == 2:
 
 setup(
     name='mease',
-    version='0.1.0',
+    version='0.1.1',
     description="Mease: Tornado websocket server with an easy callback registry",
     url="https://github.com/florianpaquet/mease",
     author="Florian PAQUET",
@@ -31,7 +31,7 @@ setup(
     ],
     install_requires=requires,
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
