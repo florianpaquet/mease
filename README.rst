@@ -42,14 +42,15 @@ Refer to the `RabbitMQ documentation <http://www.rabbitmq.com/documentation.html
 Quickstart
 **********
 
+Create a mease registry file where you create your callbacks and register them :
+
 .. code:: python
 
-    import sys
     from mease import Mease
     from mease.backends.redis import RedisBackend
     # OR from mease.backends.rabbitmq import RabbitMQBackend
 
-    mease = Mease(RedisBackend, {})
+    mease = Mease(RedisBackend)
 
     @mease.opener
     def example_opener(client, clients_list):
@@ -67,16 +68,25 @@ Quickstart
         pass
 
     @mease.sender(routing='mease.demo')
-    def example_sender(routing, clients_list, instance):
+    def example_sender(routing, clients_list, my_tuple):
         # Do stuff on outgoing message
         pass
 
     if __name__ == '__main__':
-        action = sys.argv[1]
+        # Start websocket server
+        mease.run_websocket_server()
 
-        if action == 'runserver':
-            # Run blocking web server
-            pass
-        elif action == 'run_websocket_server':
-            mease.run_websocket_server()
+In your code, you can now call the mease ``publish`` method to send a message to websocket clients :
 
+.. code:: python
+
+    from mease import Mease
+    from mease.backends.redis import RedisBackend
+    
+    mease = Mease(RedisBackend)
+    
+    # ...
+    
+    mease.publish('mease.demo', my_tuple=("Hello", "World"))
+    
+That's it ! You are now able to send messages from your web server to your websocket server in a cool way !
