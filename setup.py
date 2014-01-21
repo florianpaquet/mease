@@ -23,6 +23,7 @@ setup(
     author_email="contact@florianpaquet.com",
     long_description=read('README.rst'),
     license='MIT',
+    test_suite='mease.tests',
     packages=[
         'mease',
         'mease.backends',
