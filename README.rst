@@ -42,10 +42,9 @@ Refer to the `RabbitMQ documentation <http://www.rabbitmq.com/documentation.html
 Quickstart
 **********
 
-Create a ``mease`` instance :
-
 .. code:: python
 
+    import sys
     from mease import Mease
     from mease.backends.redis import RedisBackend
     # OR from mease.backends.rabbitmq import RabbitMQBackend
@@ -55,15 +54,29 @@ Create a ``mease`` instance :
     @mease.opener
     def example_opener(client, clients_list):
         # Do stuff on client connection
+        pass
     
     @mease.closer
     def example_closer(client, clients_list):
         # Do stuff on client disconnection
+        pass
         
     @mease.receiver(json=True)
     def example_receiver(client, clients_list, message):
         # Do stuff on incoming client message
+        pass
       
     @mease.sender(routing='mease.demo')
     def example_sender(routing, clients_list, instance):
         # Do stuff on outgoing message
+        pass
+        
+    if __name__ == '__main__':
+        action = sys.argv[1]
+        
+        if action == 'runserver':
+            # Run blocking web server
+            pass
+        elif action == 'run_websocket_server':
+            mease.run_websocket_server()
+
