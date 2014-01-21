@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
-import redis
 import pickle
 import logging
-from toredis import Client
+
+try:
+    import redis
+except ImportError:
+    raise ImportError('Missing backend dependency (redis)')
+try:
+    from toredis import Client
+except ImportError:
+    raise ImportError('Missing backend dependency (toredis-mease)')
 
 from .base import BasePublisher
 from .base import BaseSubscriber
