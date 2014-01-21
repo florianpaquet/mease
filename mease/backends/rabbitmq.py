@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-import pika
 import pickle
 import logging
-from pika.adapters.tornado_connection import TornadoConnection
+
+try:
+    import pika
+    from pika.adapters.tornado_connection import TornadoConnection
+except ImportError:
+    raise ImportError('Missing backend dependency (pika)')
 
 from .base import BasePublisher
 from .base import BaseSubscriber
