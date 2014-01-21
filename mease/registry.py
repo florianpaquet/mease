@@ -9,7 +9,7 @@ class Mease(object):
     """
     Registry for mease callbacks
     """
-    def __init__(self, backend_class, settings, max_workers=20):
+    def __init__(self, backend_class, settings={}, max_workers=20):
         """
         Inits a registry
         """
