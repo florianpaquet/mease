@@ -125,9 +125,6 @@ class WebSocketServer(object):
         self.mease.subscriber.connect()
         self.mease.subscriber.application = self.application
 
-        logger.debug("Successfully connected to backend ({backend_name})...".format(
-            backend_name=self.mease.backend.name))
-
         # Log registered callbacks
         logger.debug("Registered callback functions :")
 
