@@ -108,6 +108,8 @@ class Mease(object):
             if routing is None or routings is None or routing in routings:
                 self.executor.submit(func, routing, clients_list, *args, **kwargs)
 
+    # -- Publisher
+
     def publish(self, *args, **kwargs):
         """
         Publishes a message
@@ -118,6 +120,8 @@ class Mease(object):
             self.publisher.connect()
 
         self.publisher.publish(*args, **kwargs)
+
+    # -- Websocket
 
     def run_websocket_server(self, port=9090, autoreload=False):
         """
