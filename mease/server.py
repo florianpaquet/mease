@@ -50,7 +50,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             ip=self.request.remote_ip, message=message))
 
         # Call receiver callbacks
-        self.application._mease.call_receivers(self, message, self.application.clients)
+        self.application._mease.call_receivers(self, self.application.clients, message)
 
     def write_message(self, message, *args, **kwargs):
         """

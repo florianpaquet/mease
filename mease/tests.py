@@ -78,20 +78,20 @@ class MeaseTestCase(unittest.TestCase):
 
         # Register callback
         @self.mease.receiver(json=True)
-        def json_receiver_func(client, message, clients_list):
+        def json_receiver_func(client, clients_list, message):
             self.ret.json_client = client
             self.ret.json_message = message
             self.ret.json_clients_list = clients_list
 
         # Register callback
         @self.mease.receiver
-        def raw_receiver_func(client, message, clients_list):
+        def raw_receiver_func(client, clients_list, message):
             self.ret.raw_client = client
             self.ret.raw_message = message
             self.ret.raw_clients_list = clients_list
 
         # Call receivers
-        self.mease.call_receivers(client, message, clients_list)
+        self.mease.call_receivers(client, clients_list, message)
         self.mease.executor.shutdown(wait=True)
 
         json_message = json.loads(message)

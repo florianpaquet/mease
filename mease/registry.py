@@ -77,7 +77,7 @@ class Mease(object):
         for func in self.closers:
             self.executor.submit(func, client, clients_list)
 
-    def call_receivers(self, client, message, clients_list):
+    def call_receivers(self, client, clients_list, message):
         """
         Calls receivers callbacks
         """
@@ -98,7 +98,7 @@ class Mease(object):
                 msg = message
 
             # Call callback
-            self.executor.submit(func, client, msg, clients_list)
+            self.executor.submit(func, client, clients_list, msg)
 
     def call_senders(self, routing, clients_list, *args, **kwargs):
         """
