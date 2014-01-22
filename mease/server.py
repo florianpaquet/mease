@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import tornado.gen
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
