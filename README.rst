@@ -2,7 +2,11 @@
 mease
 #####
 
+.. image:: https://badge.fury.io/py/mease.png
+    :target: http://badge.fury.io/py/mease
+
 .. image:: https://travis-ci.org/florianpaquet/mease.png?branch=master
+    :target: https://travis-ci.org/florianpaquet/mease
 
 Websocket server using Tornado with an easy to use callback registry mechanism
 
