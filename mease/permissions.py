@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
 
+__all__ = ('passes_test',)
+
 
 def passes_test(perm_func):
     def decored(func):

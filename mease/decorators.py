@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ('base', 'opener', 'closer', 'receiver', 'sender')
+__all__ = ('method_decorator',)
 
 
 def method_decorator(method):
