@@ -119,7 +119,7 @@ class Mease(object):
             self.publisher.__connected = True
             self.publisher.connect()
 
-        self.publisher.publish(*args, **kwargs)
+        self.executor.submit(self.publisher.publish, *args, **kwargs)
 
     # -- Websocket
 
