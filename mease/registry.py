@@ -10,7 +10,7 @@ class Mease(object):
     """
     Registry for mease callbacks
     """
-    def __init__(self, backend_class, settings={}, max_workers=20):
+    def __init__(self, backend_class, settings={}, max_workers=20, async=True):
         """
         Inits a registry
         """
@@ -28,7 +28,10 @@ class Mease(object):
         self.senders = []
 
         # Executor
-        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.async = async
+
+        if self.async:
+            self.executor = ThreadPoolExecutor(max_workers=max_workers)
 
     # -- Registers
 
@@ -69,19 +72,28 @@ class Mease(object):
 
     # -- Callers
 
+    def submit(self, func, *args, **kwargs):
+        """
+        Submits callbacks to the executor or runs thems
+        """
+        if self.async:
+            self.executor.submit(func, *args, **kwargs)
+        else:
+            func(*args, **kwargs)
+
     def call_openers(self, client, clients_list):
         """
         Calls openers callbacks
         """
         for func in self.openers:
-            self.executor.submit(func, client, clients_list)
+            self.submit(func, client, clients_list)
 
     def call_closers(self, client, clients_list):
         """
         Calls closers callbacks
         """
         for func in self.closers:
-            self.executor.submit(func, client, clients_list)
+            self.submit(func, client, clients_list)
 
     def call_receivers(self, client, clients_list, message):
         """
@@ -104,7 +116,7 @@ class Mease(object):
                 msg = message
 
             # Call callback
-            self.executor.submit(func, client, clients_list, msg)
+            self.submit(func, client, clients_list, msg)
 
     def call_senders(self, routing, clients_list, *args, **kwargs):
         """
@@ -129,7 +141,7 @@ class Mease(object):
                     call_callback = True
 
             if call_callback:
-                self.executor.submit(func, routing, clients_list, *args, **kwargs)
+                self.submit(func, routing, clients_list, *args, **kwargs)
 
     # -- Publisher
 
@@ -142,7 +154,7 @@ class Mease(object):
             self.publisher.__connected = True
             self.publisher.connect()
 
-        self.executor.submit(self.publisher.publish, *args, **kwargs)
+        self.submit(self.publisher.publish, *args, **kwargs)
 
     # -- Websocket
 

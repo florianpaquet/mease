@@ -3,13 +3,10 @@ from .base import BasePublisher
 from .base import BaseSubscriber
 from .base import BaseBackend
 
-__all__ = ('BasePublisher', 'BaseSubscriber', 'TestBackend')
+__all__ = ('TestPublisher', 'TestSubscriber', 'TestBackend')
 
 
-class BasePublisher(BasePublisher):
-    """
-    Base publisher that handles outgoing messages
-    """
+class TestPublisher(BasePublisher):
     def connect(self):
         pass
 
@@ -17,10 +14,7 @@ class BasePublisher(BasePublisher):
         pass
 
 
-class BaseSubscriber(BaseSubscriber):
-    """
-    Base subscriber class that handles incoming messages
-    """
+class TestSubscriber(BaseSubscriber):
     def connect(self):
         pass
 
@@ -29,5 +23,5 @@ class TestBackend(BaseBackend):
     """
     Base backend with a publisher and a subscriber class
     """
-    publisher_class = BasePublisher
-    subscriber_class = BaseSubscriber
+    publisher_class = TestPublisher
+    subscriber_class = TestSubscriber
