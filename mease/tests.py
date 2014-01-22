@@ -9,6 +9,9 @@ class MeaseTestCase(unittest.TestCase):
 
     def setUp(self):
         self.mease = Mease(TestBackend, {})
+        self.reset_return_namespace()
+
+    def reset_return_namespace(self):
         self.ret = type("", (), {})()
 
     def test_opener(self):
@@ -32,7 +35,6 @@ class MeaseTestCase(unittest.TestCase):
 
         # Call openers
         self.mease.call_openers(client, clients_list)
-        self.mease.executor.shutdown(wait=True)
 
         self.assertEqual(client, self.ret.client)
         self.assertListEqual(clients_list, self.ret.clients_list)
@@ -61,7 +63,6 @@ class MeaseTestCase(unittest.TestCase):
 
         # Call closers
         self.mease.call_closers(client, clients_list)
-        self.mease.executor.shutdown(wait=True)
 
         self.assertEqual(client, self.ret.client)
         self.assertListEqual(clients_list, self.ret.clients_list)
@@ -93,7 +94,6 @@ class MeaseTestCase(unittest.TestCase):
 
         # Call receivers
         self.mease.call_receivers(client, clients_list, message)
-        self.mease.executor.shutdown(wait=True)
 
         json_message = json.loads(message)
         self.assertEqual(client, self.ret.json_client)
@@ -123,15 +123,106 @@ class MeaseTestCase(unittest.TestCase):
             self.ret.other_routing = routing
             self.ret.other_message = message
 
+        @self.mease.sender(routing=['mease.test', 'mease.other'])
+        def more_sender_func(routing, message):
+            self.ret.more_routing = routing
+            self.ret.more_message = message
+
         # Call senders
         self.mease.call_senders(routing, message)
-        self.mease.executor.shutdown(wait=True)
 
         self.assertEqual(routing, self.ret.routing)
         self.assertEqual(message, self.ret.message)
 
         self.assertFalse(hasattr(self.ret, 'other_routing'))
         self.assertFalse(hasattr(self.ret, 'other_message'))
+
+        self.assertEqual(routing, self.ret.more_routing)
+        self.assertEqual(message, self.ret.more_message)
+
+        self.reset_return_namespace()
+
+        # Call senders
+        self.mease.call_senders(None, message)
+
+        self.assertIsNone(self.ret.routing)
+        self.assertEqual(message, self.ret.message)
+
+        self.assertIsNone(self.ret.other_routing)
+        self.assertEqual(message, self.ret.other_message)
+
+        self.assertIsNone(self.ret.more_routing)
+        self.assertEqual(message, self.ret.more_message)
+
+        self.reset_return_namespace()
+
+    def test_regex_sender(self):
+        """
+        Test regular expressions for routing callbacks
+        """
+        message = "Hello !"
+
+        # Register callbacks
+        @self.mease.sender(routing_re=r'mease_.*')
+        def first_sender_func(routing, message):
+            self.ret.first_routing = routing
+            self.ret.first_message = message
+
+        @self.mease.sender(routing='this_is_nope_channel', routing_re=r'tests_.*')
+        def second_sender_func(routing, message):
+            self.ret.second_routing = routing
+            self.ret.second_message = message
+
+        @self.mease.sender(routing='mease_test', routing_re=r'.*nope.*')
+        def third_sender_func(routing, message):
+            self.ret.third_routing = routing
+            self.ret.third_message = message
+
+        # Call senders
+        routing = 'mease_test'
+
+        self.mease.call_senders(routing, message)
+
+        self.assertEqual(routing, self.ret.first_routing)
+        self.assertEqual(message, self.ret.first_message)
+
+        self.assertFalse(hasattr(self.ret, 'second_routing'))
+        self.assertFalse(hasattr(self.ret, 'second_message'))
+
+        self.assertEqual(routing, self.ret.third_routing)
+        self.assertEqual(message, self.ret.third_message)
+
+        self.reset_return_namespace()
+
+        # Call senders
+        routing = 'this_is_nope_channel'
+
+        self.mease.call_senders(routing, message)
+
+        self.assertFalse(hasattr(self.ret, 'first_second_routing'))
+        self.assertFalse(hasattr(self.ret, 'first_message'))
+
+        self.assertEqual(routing, self.ret.second_routing)
+        self.assertEqual(message, self.ret.second_message)
+
+        self.assertEqual(routing, self.ret.third_routing)
+        self.assertEqual(message, self.ret.third_message)
+
+        self.reset_return_namespace()
+
+        # Call senders
+        routing = 'noone'
+
+        self.mease.call_senders(routing, message)
+
+        self.assertFalse(hasattr(self.ret, 'first_second_routing'))
+        self.assertFalse(hasattr(self.ret, 'first_message'))
+
+        self.assertFalse(hasattr(self.ret, 'second_second_routing'))
+        self.assertFalse(hasattr(self.ret, 'second_message'))
+
+        self.assertFalse(hasattr(self.ret, 'third_second_routing'))
+        self.assertFalse(hasattr(self.ret, 'third_message'))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import json
 from concurrent.futures import ThreadPoolExecutor
 
@@ -53,13 +54,18 @@ class Mease(object):
         self.receivers.append((func, json))
 
     @method_decorator
-    def sender(self, func, routing=None):
+    def sender(self, func, routing=None, routing_re=None):
         """
         Registers a sender function
         """
-        if not isinstance(routing, list):
+        if routing and not isinstance(routing, list):
             routing = [routing]
-        self.senders.append((func, routing))
+
+        if routing_re and not isinstance(routing_re, list):
+            routing_re = [routing_re]
+            routing_re[:] = [re.compile(r) for r in routing_re]
+
+        self.senders.append((func, routing, routing_re))
 
     # -- Callers
 
@@ -104,8 +110,25 @@ class Mease(object):
         """
         Calls senders callbacks
         """
-        for func, routings in self.senders:
-            if routing is None or routings is None or routing in routings:
+        for func, routings, routings_re in self.senders:
+            call_callback = False
+
+            # Message is published globally
+            if routing is None or (routings is None and routings_re is None):
+                call_callback = True
+
+            # Message is not published globally
+            else:
+
+                # Message is catched by a string routing key
+                if routings and routing in routings:
+                    call_callback = True
+
+                # Message is catched by a regex routing key
+                if routings_re and any(r.match(routing) for r in routings_re):
+                    call_callback = True
+
+            if call_callback:
                 self.executor.submit(func, routing, clients_list, *args, **kwargs)
 
     # -- Publisher
