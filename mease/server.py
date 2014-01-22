@@ -26,8 +26,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.application._mease.call_openers(self, self.application.clients)
 
         # Append client to clients list
-        if self not in self.application.clients:
-            self.application.clients.append(self)
+        self.application.clients.add(self)
 
     def on_close(self):
         """
@@ -39,8 +38,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.application._mease.call_closers(self, self.application.clients)
 
         # Remove client from clients list
-        if self in self.application.clients:
-            self.application.clients.remove(self)
+        self.application.clients.discard(self)
 
     def on_message(self, message):
         """
@@ -89,7 +87,7 @@ class WebSocketServer(object):
         self.application.storage = {}
 
         # Initialize an empty clients list
-        self.application.clients = []
+        self.application.clients = set()
 
         # Expose mease instance to Tornado application
         self.application._mease = self.mease
