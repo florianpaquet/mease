@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 import pickle
-import logging
+
+from .. import logger
 
 try:
     import pika
     from pika.adapters.tornado_connection import TornadoConnection
 except ImportError:
-    raise ImportError('Missing backend dependency (pika)')
+    logger.critical("Missing backend dependency (pika)")
+    raise
 
 from .base import BasePublisher
 from .base import BaseSubscriber
 from .base import BaseBackend
 
-
-logger = logging.getLogger('mease.websocket_server')
+__all__ = ('RabbitMQPublisher', 'RabbitMQSubscriber', 'RabbitMQBackend')
 
 
 class RabbitMQBackendMixin(object):

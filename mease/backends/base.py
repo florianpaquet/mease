@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import logging
+from .. import logger
 
-logger = logging.getLogger('mease.websocket_server')
+__all__ = ('BasePublisher', 'BaseSubscriber', 'BaseBackend')
 
 
 class BasePublisher(object):

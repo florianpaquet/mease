@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import logging
 import tornado.gen
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
 
+from . import logger
+
 __all__ = ('WebSocketServer',)
-logger = logging.getLogger('mease.websocket_server')
 
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):

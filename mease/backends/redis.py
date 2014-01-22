@@ -2,22 +2,26 @@
 from __future__ import absolute_import
 
 import pickle
-import logging
+
+from .. import logger
 
 try:
     import redis
 except ImportError:
-    raise ImportError('Missing backend dependency (redis)')
+    logger.critical("Missing backend dependency (redis)")
+    raise
+
 try:
     from toredis import Client
 except ImportError:
-    raise ImportError('Missing backend dependency (toredis-mease)')
+    logger.critical("Missing backend dependency (toredis-mease)")
+    raise
 
 from .base import BasePublisher
 from .base import BaseSubscriber
 from .base import BaseBackend
 
-logger = logging.getLogger('mease.websocket_server')
+__all__ = ('RedisPublisher', 'RedisSubscriber', 'RedisBackend')
 
 
 class RedisBackendMixin(object):

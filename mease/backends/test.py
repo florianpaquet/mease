@@ -3,6 +3,8 @@ from .base import BasePublisher
 from .base import BaseSubscriber
 from .base import BaseBackend
 
+__all__ = ('BasePublisher', 'BaseSubscriber', 'TestBackend')
+
 
 class BasePublisher(BasePublisher):
     """
