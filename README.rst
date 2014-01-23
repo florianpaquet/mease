@@ -46,25 +46,27 @@ Refer to the `RabbitMQ documentation <http://www.rabbitmq.com/documentation.html
 Quickstart
 **********
 
-Create a mease registry file where you create your callbacks and register them :
+Create a file where you can write your callbacks and register them :
 
 .. code:: python
 
     from mease import Mease
     from mease.backends.redis import RedisBackend
     # OR from mease.backends.rabbitmq import RabbitMQBackend
+    
+    from uuid import uuid4
 
     mease = Mease(RedisBackend)
 
     @mease.opener
     def example_opener(client, clients_list):
         # Do stuff on client connection
-        pass
+        client.storage['uuid'] = str(uuid4())
 
     @mease.closer
     def example_closer(client, clients_list):
         # Do stuff on client disconnection
-        pass
+        print("Client {uuid} disconnected".format(uuid=client.storage.get('uuid')))
 
     @mease.receiver(json=True)
     def example_receiver(client, clients_list, message):
@@ -79,6 +81,8 @@ Create a mease registry file where you create your callbacks and register them :
     if __name__ == '__main__':
         # Start websocket server
         mease.run_websocket_server()
+
+Remember to run the websocket server from the ``mease`` instance where you registered your callbacks.
 
 In your code, you can now call the mease ``publish`` method to send a message to websocket clients :
 
