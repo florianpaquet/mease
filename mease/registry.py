@@ -10,12 +10,12 @@ class Mease(object):
     """
     Registry for mease callbacks
     """
-    def __init__(self, backend_class, settings={}, max_workers=20, async=True):
+    def __init__(self, backend_class, backend_settings={}, max_workers=20, async=True):
         """
         Inits a registry
         """
         # Backend
-        self.backend = backend_class(settings)
+        self.backend = backend_class(backend_settings)
 
         self.publisher = self.backend.get_publisher()
         self.publisher.__connected = False
@@ -158,11 +158,11 @@ class Mease(object):
 
     # -- Websocket
 
-    def run_websocket_server(self, port=9090, autoreload=False):
+    def run_websocket_server(self, port=9090, address='', url=r'/', autoreload=False):
         """
         Runs Tornado websocket server (blocking)
         """
         from .server import WebSocketServer
 
-        ws_server = WebSocketServer(self, port, autoreload)
+        ws_server = WebSocketServer(self, port, address, url, autoreload)
         ws_server.run()

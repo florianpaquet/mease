@@ -69,17 +69,19 @@ class WebSocketServer(object):
     """
     Tornado websocket server
     """
-    def __init__(self, mease, port, autoreload):
+    def __init__(self, mease, port, address, url, autoreload):
         """
         Inits websocket server
         """
         self.mease = mease
         self.port = port
+        self.address = address
+        self.url = url
 
         # Tornado app
         self.ioloop = tornado.ioloop.IOLoop.instance()
         self.application = tornado.web.Application([
-            (r'/', WebSocketHandler),
+            (url, WebSocketHandler),
         ], debug=autoreload)
 
         # Initialize an empty application storage
@@ -122,8 +124,9 @@ class WebSocketServer(object):
         """
         Starts websocket server (blocking)
         """
-        self.application.listen(self.port)
+        self.application.listen(port=self.port, address=self.address)
 
-        logger.info("Websocket server listening on port {port}".format(port=self.port))
+        logger.info("Websocket server listening on {address}:{port} (URL: {url})".format(
+            address=self.address, port=self.port, url=self.url))
 
         self.ioloop.start()
