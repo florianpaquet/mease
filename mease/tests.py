@@ -8,7 +8,7 @@ from .backends.test import TestBackend
 class MeaseTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.mease = Mease(TestBackend, async=False)
+        self.mease = Mease(TestBackend)
         self.reset_return_namespace()
 
     def reset_return_namespace(self):
