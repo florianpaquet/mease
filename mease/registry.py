@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 import re
 import json
-from concurrent.futures import ThreadPoolExecutor
 
 from .decorators import method_decorator
+from .messages import ON_SEND
+
+__all__ = ('Mease',)
 
 
 class Mease(object):
     """
     Registry for mease callbacks
     """
-    def __init__(self, backend_class, backend_settings={}, max_workers=20, async=True):
+    def __init__(self, backend_class, backend_settings={}):
         """
         Inits a registry
         """
@@ -18,7 +20,8 @@ class Mease(object):
         self.backend = backend_class(backend_settings)
 
         self.publisher = self.backend.get_publisher()
-        self.publisher.__connected = False
+        self.publisher.connect()
+
         self.subscriber = self.backend.get_subscriber()
 
         # Callbacks
@@ -27,11 +30,13 @@ class Mease(object):
         self.receivers = []
         self.senders = []
 
-        # Executor
-        self.async = async
-
-        if self.async:
-            self.executor = ThreadPoolExecutor(max_workers=max_workers)
+    def _get_registry_names(self, registry):
+        """
+        Returns functions names for a registry
+        """
+        return ', '.join(
+            f.__name__ if not isinstance(f, tuple) else f[0].__name__
+            for f in getattr(self, registry, []))
 
     # -- Registers
 
@@ -64,36 +69,28 @@ class Mease(object):
         if routing and not isinstance(routing, list):
             routing = [routing]
 
-        if routing_re and not isinstance(routing_re, list):
-            routing_re = [routing_re]
+        if routing_re:
+            if not isinstance(routing_re, list):
+                routing_re = [routing_re]
             routing_re[:] = [re.compile(r) for r in routing_re]
 
         self.senders.append((func, routing, routing_re))
 
     # -- Callers
 
-    def submit(self, func, *args, **kwargs):
-        """
-        Submits callbacks to the executor or runs thems
-        """
-        if self.async:
-            self.executor.submit(func, *args, **kwargs)
-        else:
-            func(*args, **kwargs)
-
     def call_openers(self, client, clients_list):
         """
         Calls openers callbacks
         """
         for func in self.openers:
-            self.submit(func, client, clients_list)
+            func(client, clients_list)
 
     def call_closers(self, client, clients_list):
         """
         Calls closers callbacks
         """
         for func in self.closers:
-            self.submit(func, client, clients_list)
+            func(client, clients_list)
 
     def call_receivers(self, client, clients_list, message):
         """
@@ -116,7 +113,7 @@ class Mease(object):
                 msg = message
 
             # Call callback
-            self.submit(func, client, clients_list, msg)
+            func(client, clients_list, msg)
 
     def call_senders(self, routing, clients_list, *args, **kwargs):
         """
@@ -141,28 +138,26 @@ class Mease(object):
                     call_callback = True
 
             if call_callback:
-                self.submit(func, routing, clients_list, *args, **kwargs)
+                func(routing, clients_list, *args, **kwargs)
 
     # -- Publisher
 
-    def publish(self, *args, **kwargs):
+    def publish(self, message_type=ON_SEND, client_id=None, client_storage=None,
+                *args, **kwargs):
         """
         Publishes a message
         """
-        # Connect to subscriber on first use
-        if not self.publisher.__connected:
-            self.publisher.__connected = True
-            self.publisher.connect()
-
-        self.submit(self.publisher.publish, *args, **kwargs)
+        self.publisher.publish(
+            message_type, client_id, client_storage, *args, **kwargs)
 
     # -- Websocket
 
-    def run_websocket_server(self, port=9090, address='', url=r'/', autoreload=False):
+    def run_websocket_server(self, host='localhost', port=9090, debug=False):
         """
-        Runs Tornado websocket server (blocking)
+        Runs websocket server
         """
-        from .server import WebSocketServer
+        from .server import MeaseWebSocketServerFactory
 
-        ws_server = WebSocketServer(self, port, address, url, autoreload)
-        ws_server.run()
+        websocket_factory = MeaseWebSocketServerFactory(
+            mease=self, host=host, port=port, debug=debug)
+        websocket_factory.run_server()

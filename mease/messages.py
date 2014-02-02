@@ -1,0 +1,11 @@
+ON_OPEN = 1
+ON_CLOSE = 2
+ON_RECEIVE = 3
+ON_SEND = 4
+
+MESSAGES_TYPES = (
+    (ON_OPEN, 'OPEN'),
+    (ON_CLOSE, 'CLOSE'),
+    (ON_RECEIVE, 'RECEIVE'),
+    (ON_SEND, 'SEND')
+)

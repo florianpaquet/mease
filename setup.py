@@ -9,7 +9,9 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 requires = [
-    'tornado>=3.2',
+    'autobahn==0.8.0',
+    'msgpack-python==0.4.0',
+    'Twisted==13.2.0'
 ]
 
 if sys.version_info[0] == 2:

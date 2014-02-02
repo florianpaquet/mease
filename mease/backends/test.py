@@ -23,5 +23,6 @@ class TestBackend(BaseBackend):
     """
     Base backend with a publisher and a subscriber class
     """
+    name = "Test Backend"
     publisher_class = TestPublisher
     subscriber_class = TestSubscriber

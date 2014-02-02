@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-
-import pickle
+from threading import Thread
 
 from .. import logger
 
@@ -9,12 +8,6 @@ try:
     import redis
 except ImportError:
     logger.critical("Missing backend dependency (redis)")
-    raise
-
-try:
-    from toredis import Client
-except ImportError:
-    logger.critical("Missing backend dependency (toredis-mease)")
     raise
 
 from .base import BasePublisher
@@ -28,29 +21,37 @@ class RedisBackendMixin(object):
     """
     Redis backend mixin that sets connection settings
     """
-    def __init__(self, host, port, channel, *args, **kwargs):
+    def __init__(self, host, port, password, channel, *args, **kwargs):
         super(RedisBackendMixin, self).__init__(*args, **kwargs)
         self.host = host
         self.port = port
+        self.password = password
         self.channel = channel
+
+    def connect(self):
+        """
+        Connects to publisher
+        """
+        self.client = redis.Redis(
+            host=self.host, port=self.port, password=self.password)
 
 
 class RedisPublisher(RedisBackendMixin, BasePublisher):
     """
     Publisher using Redis PUB
     """
-    def connect(self):
-        """
-        Connects to publisher
-        """
-        self.client = redis.Redis(host=self.host, port=self.port)
-
-    def publish(self, routing=None, *args, **kwargs):
+    def publish(self, message_type, client_id, client_storage, *args, **kwargs):
         """
         Publishes a message
         """
-        p = pickle.dumps((routing, args, kwargs), protocol=2)
+        p = self.pack(message_type, client_id, client_storage, args, kwargs)
         self.client.publish(self.channel, p)
+
+    def exit(self):
+        """
+        Closes the connection
+        """
+        self.client.connection_pool.disconnect()
 
 
 class RedisSubscriber(RedisBackendMixin, BaseSubscriber):
@@ -64,27 +65,41 @@ class RedisSubscriber(RedisBackendMixin, BaseSubscriber):
         logger.info("Connecting to Redis on {host}:{port}...".format(
             host=self.host, port=self.port))
 
-        # Connect
-        self.client = Client()
-        self.client.connect(host=self.host, port=self.port)
-
+        super(RedisSubscriber, self).connect()
         logger.info("Successfully connected to Redis")
 
         # Subscribe to channel
-        self.client.subscribe(self.channel, callback=self.on_message)
+        self.pubsub = self.client.pubsub()
+        self.pubsub.subscribe(self.channel)
 
         logger.info("Subscribed to [{channel}] Redis channel".format(
             channel=self.channel))
 
-    def on_message(self, message):
-        """
-        Redis pubsub callback
-        """
-        event, channel, data = message
+        # Start listening
+        t = Thread(target=self.listen)
+        t.setDaemon(True)
+        t.start()
 
-        if event.decode() == 'message':
-            routing, args, kwargs = pickle.loads(data)
-            self.dispatch_message(routing, args, kwargs)
+    def listen(self):
+        """
+        Listen for messages
+        """
+        for message in self.pubsub.listen():
+            if message['type'] == 'message':
+                message_type, client_id, client_storage, args, kwargs = self.unpack(
+                    message['data'])
+
+                self.dispatch_message(
+                    message_type, client_id, client_storage, args, kwargs)
+
+    def exit(self):
+        """
+        Closes the connection
+        """
+        self.pubsub.unsubscribe()
+        self.client.connection_pool.disconnect()
+
+        logger.info("Connection to Redis closed")
 
 
 class RedisBackend(BaseBackend):
@@ -101,6 +116,7 @@ class RedisBackend(BaseBackend):
         self.host = self.settings.get('HOST', 'localhost')
         self.port = self.settings.get('PORT', 6379)
         self.channel = self.settings.get('CHANNEL', 'mease')
+        self.password = self.settings.get('PASSWORD', None)
 
     def get_kwargs(self):
         """
@@ -109,7 +125,8 @@ class RedisBackend(BaseBackend):
         return {
             'host': self.host,
             'port': self.port,
-            'channel': self.channel
+            'channel': self.channel,
+            'password': self.password
         }
 
     get_publisher_kwargs = get_kwargs

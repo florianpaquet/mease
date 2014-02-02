@@ -1,132 +1,140 @@
 # -*- coding: utf-8 -*-
-import tornado.ioloop
-import tornado.web
-import tornado.websocket
+import json
+from autobahn.twisted.websocket import WebSocketServerProtocol
+from autobahn.twisted.websocket import WebSocketServerFactory
+from uuid import uuid1
+from twisted.internet import reactor
 
 from . import logger
+from .messages import ON_OPEN
+from .messages import ON_CLOSE
+from .messages import ON_RECEIVE
 
-__all__ = ('WebSocketServer',)
+__all__ = ('MeaseWebSocketServerProtocol', 'MeaseWebSocketServerFactory')
 
 
-class WebSocketHandler(tornado.websocket.WebSocketHandler):
-    """
-    Tornado websocket handler
-    """
-    def open(self):
+class MeaseWebSocketServerProtocol(WebSocketServerProtocol):
+
+    def onConnect(self, request):
         """
         Called when a client opens a websocket connection
         """
-        logger.debug("Connection opened ({ip})".format(ip=self.request.remote_ip))
+        logger.debug("Connection opened ({peer})".format(peer=self.peer))
 
-        # Initialize an empty client storage
         self.storage = {}
+        self._client_id = str(uuid1())
 
-        # Call openers callbacks
-        self.application._mease.call_openers(self, self.application.clients)
+    def onOpen(self):
+        """
+        Called when a client has opened a websocket connection
+        """
+        self.factory.add_client(self)
 
-        # Append client to clients list
-        self.application.clients.add(self)
+        # Publish ON_OPEN message
+        self.factory.mease.publisher.publish(
+            message_type=ON_OPEN, client_id=self._client_id, client_storage=self.storage)
 
-    def on_close(self):
+    def onClose(self, was_clean, code, reason):
         """
         Called when a client closes a websocket connection
         """
-        logger.debug("Connection closed ({ip})".format(ip=self.request.remote_ip))
+        logger.debug("Connection closed ({peer})".format(peer=self.peer))
 
-        # Call closer callbacks
-        self.application._mease.call_closers(self, self.application.clients)
+        # Publish ON_CLOSE message
+        self.factory.mease.publisher.publish(
+            message_type=ON_CLOSE, client_id=self._client_id, client_storage=self.storage)
 
-        # Remove client from clients list
-        self.application.clients.discard(self)
+        self.factory.remove_client(self)
 
-    def on_message(self, message):
+    def onMessage(self, payload, is_binary):
         """
-        Called when a client sends a message through websocket
+        Called when a client sends a message
         """
-        logger.debug("Incoming message ({ip}) : {message}".format(
-            ip=self.request.remote_ip, message=message))
+        if not is_binary:
+            payload = payload.decode('utf-8')
 
-        # Call receiver callbacks
-        self.application._mease.call_receivers(self, self.application.clients, message)
+            logger.debug("Incoming message ({peer}) : {message}".format(
+                peer=self.peer, message=payload))
 
-    def write_message(self, message, *args, **kwargs):
+            # Publish ON_RECEIVE message
+            self.factory.mease.publisher.publish(
+                message_type=ON_RECEIVE,
+                client_id=self._client_id,
+                client_storage=self.storage,
+                message=payload)
+
+    def sendMessage(self, payload, *args, **kwargs):
         """
         Logs message
         """
-        logger.debug("Outgoing message for ({ip}) : {message}".format(
-            ip=self.request.remote_ip, message=message))
+        logger.debug("Outgoing message for ({peer}) : {message}".format(
+            peer=self.peer, message=payload))
 
-        super(WebSocketHandler, self).write_message(message, *args, **kwargs)
+        WebSocketServerProtocol.sendMessage(self, payload, *args, **kwargs)
 
-    def send(self, *args, **kwargs):
+    def send(self, payload, *args, **kwargs):
         """
-        Alias for WebSocketHandler `write_message` method
+        Alias for WebSocketServerProtocol `sendMessage` method
         """
-        self.write_message(*args, **kwargs)
+        if isinstance(payload, (list, dict)):
+            payload = json.dumps(payload)
+
+        self.sendMessage(payload.encode(), *args, **kwargs)
 
 
-class WebSocketServer(object):
-    """
-    Tornado websocket server
-    """
-    def __init__(self, mease, port, address, url, autoreload):
-        """
-        Inits websocket server
-        """
-        self.mease = mease
+class MeaseWebSocketServerFactory(WebSocketServerFactory):
+    def __init__(self, mease, host, port, debug):
+        self.host = host
         self.port = port
-        self.address = address
-        self.url = url
 
-        # Tornado app
-        self.ioloop = tornado.ioloop.IOLoop.instance()
-        self.application = tornado.web.Application([
-            (url, WebSocketHandler),
-        ], debug=autoreload)
+        self.address = 'ws://{host}:{port}'.format(host=host, port=self.port)
+        WebSocketServerFactory.__init__(self, self.address, debug=debug)
 
-        # Initialize an empty application storage
-        self.application.storage = {}
+        self.storage = {}
+        self.clients_list = set()
 
-        # Initialize an empty clients list
-        self.application.clients = set()
-
-        # Expose mease instance to Tornado application
-        self.application._mease = self.mease
+        self.mease = mease
 
         # Connect to subscriber
         logger.debug("Connecting to backend ({backend_name})...".format(
             backend_name=self.mease.backend.name))
 
         self.mease.subscriber.connect()
-        self.mease.subscriber.application = self.application
+        self.mease.subscriber.factory = self
 
         # Log registered callbacks
         logger.debug("Registered callback functions :")
 
         logger.debug(
-            "Openers : [%s]" % self._get_registry_names(self.mease.openers))
+            "Openers : [%s]" % self.mease._get_registry_names('openers'))
         logger.debug(
-            "Closers : [%s]" % self._get_registry_names(self.mease.closers))
+            "Closers : [%s]" % self.mease._get_registry_names('closers'))
         logger.debug(
-            "Receivers : [%s]" % self._get_registry_names(self.mease.receivers))
+            "Receivers : [%s]" % self.mease._get_registry_names('receivers'))
         logger.debug(
-            "Senders : [%s]" % self._get_registry_names(self.mease.senders))
+            "Senders : [%s]" % self.mease._get_registry_names('senders'))
 
-    def _get_registry_names(self, registry):
+    def add_client(self, client):
         """
-        Returns functions names for a registry
+        Adds a client to the clients list
         """
-        return ', '.join(
-            f.__name__ if not isinstance(f, tuple) else f[0].__name__
-            for f in registry)
+        self.clients_list.add(client)
 
-    def run(self):
+    def remove_client(self, client):
         """
-        Starts websocket server (blocking)
+        Removes a client from the client list
         """
-        self.application.listen(port=self.port, address=self.address)
+        self.clients_list.discard(client)
 
-        logger.info("Websocket server listening on {address}:{port} (URL: {url})".format(
-            address=self.address, port=self.port, url=self.url))
+    def run_server(self):
+        """
+        Runs the WebSocket server
+        """
+        self.protocol = MeaseWebSocketServerProtocol
 
-        self.ioloop.start()
+        reactor.listenTCP(port=self.port, factory=self, interface=self.host)
+
+        logger.info("Websocket server listening on {address}".format(
+            address=self.address))
+
+        reactor.run()
