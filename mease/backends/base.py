@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import msgpack
+import pickle
 from twisted.internet import reactor
 
 from .. import logger
@@ -38,7 +38,8 @@ class BasePublisher(object):
         """
         Packs a message
         """
-        return msgpack.packb((message_type, client_id, client_storage, args, kwargs))
+        return pickle.dumps(
+            (message_type, client_id, client_storage, args, kwargs), protocol=2)
 
     def exit(self):
         """
@@ -65,7 +66,7 @@ class BaseSubscriber(object):
         """
         Unpacks a message
         """
-        return msgpack.unpackb(message)
+        return pickle.loads(message)
 
     def dispatch_message(self, message_type, client_id, client_storage, args, kwargs):
         """

@@ -9,8 +9,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 requires = [
-    'autobahn==0.8.0',
-    'msgpack-python==0.4.0',
+    'autobahn==0.7.4',
     'Twisted==13.2.0'
 ]
 
