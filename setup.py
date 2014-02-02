@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-import sys
 from setuptools import setup
 
 
@@ -12,9 +11,6 @@ requires = [
     'autobahn==0.7.4',
     'Twisted==13.2.0'
 ]
-
-if sys.version_info[0] == 2:
-    requires.append('futures')
 
 setup(
     name='mease',
