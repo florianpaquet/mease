@@ -35,7 +35,7 @@ class RabbitMQBackendMixin(object):
         """
         self.connection = Connection(self.broker_url)
 
-        e = Exchange('mease', type='fanout')
+        e = Exchange('mease', type='fanout', durable=False, delivery_mode=1)
         self.exchange = e(self.connection.default_channel)
         self.exchange.declare()
 
@@ -74,7 +74,7 @@ class RabbitMQSubscriber(RabbitMQBackendMixin, BaseSubscriber):
 
         super(RabbitMQSubscriber, self).connect()
 
-        q = Queue(exchange=self.exchange, exclusive=True)
+        q = Queue(exchange=self.exchange, exclusive=True, durable=False)
 
         self.queue = q(self.connection.default_channel)
         self.queue.declare()
