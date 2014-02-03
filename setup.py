@@ -14,8 +14,8 @@ requires = [
 
 setup(
     name='mease',
-    version='0.1.1',
-    description="Mease: Tornado websocket server with an easy callback registry",
+    version='0.2.0',
+    description="Mease: Twisted/Autobahn websocket server with an easy callback registry",
     url="https://github.com/florianpaquet/mease",
     author="Florian PAQUET",
     author_email="contact@florianpaquet.com",

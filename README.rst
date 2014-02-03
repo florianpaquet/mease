@@ -8,7 +8,7 @@ mease
 .. image:: https://travis-ci.org/florianpaquet/mease.png?branch=master
     :target: https://travis-ci.org/florianpaquet/mease
 
-Websocket server using Tornado with an easy to use callback registry mechanism
+Websocket server using Twisted/Autobahn with an easy to use callback registry mechanism
 
 See `django-mease <https://github.com/florianpaquet/django-mease>`_, `django-mease-example <https://github.com/florianpaquet/django-mease-example>`_ or `flask-mease-example <https://github.com/florianpaquet/flask-mease-example>`_ for working examples.
 
@@ -28,7 +28,7 @@ Redis
 To use Redis backend, install these dependencies : ::
 
     sudo apt-get install redis-server
-    pip install redis toredis-mease
+    pip install redis
 
 Refer to the `Redis documentation <http://redis.io/documentation>`_ to configure your server.
 
@@ -38,7 +38,7 @@ RabbitMQ
 To use RabbitMQ backend, install these dependencies : ::
 
     sudo apt-get install rabbitmq-server
-    pip install pika
+    pip install kombu
 
 Refer to the `RabbitMQ documentation <http://www.rabbitmq.com/documentation.html>`_ to configure your server.
 
@@ -53,7 +53,7 @@ Create a file where you can write your callbacks and register them :
     from mease import Mease
     from mease.backends.redis import RedisBackend
     # OR from mease.backends.rabbitmq import RabbitMQBackend
-    
+
     from uuid import uuid4
 
     mease = Mease(RedisBackend)
@@ -90,11 +90,11 @@ In your code, you can now call the mease ``publish`` method to send a message to
 
     from mease import Mease
     from mease.backends.redis import RedisBackend
-    
+
     mease = Mease(RedisBackend)
-    
+
     # ...
-    
+
     mease.publish('mease.demo', my_tuple=("Hello", "World"))
-    
+
 That's it ! You are now able to send messages from your web server to your websocket server in a cool way !
