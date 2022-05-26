@@ -9,7 +9,7 @@ def read(fname):
 
 requires = [
     'autobahn==0.7.4',
-    'Twisted==13.2.0'
+    'Twisted==22.4.0'
 ]
 
 setup(
